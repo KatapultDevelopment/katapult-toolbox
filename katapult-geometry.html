@@ -58,14 +58,19 @@
     //  -------- NOT FULLY WORKING ---------------- 
     // calcuates shortest distance between point and line in meters
     k.calcDistanceToLine = function(linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, pointLat, pointLon) {
-        console.log(linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, pointLat, pointLon)
-        var distanceToPoint2 = k.calcDistance(linePoint2_Lat, linePoint2_Lon, pointLat, pointLon);
-        var bearingToPoint1 = k.calcBearingLL(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon);
-        var bearingToPoint2 = k.calcBearingLL(pointLat, pointLon, linePoint2_Lat, linePoint2_Lon);
-        console.log('dbb', distanceToPoint2, bearingToPoint1, bearingToPoint2)
-        return Math.abs(Math.asin(Math.sin(distanceToPoint2 / k.earthRadius) * Math.sin(bearingToPoint1 - bearingToPoint2)) * k.earthRadius);
+        // console.log(linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, pointLat, pointLon)
+        // var distanceToPoint2 = k.calcDistance(linePoint2_Lat, linePoint2_Lon, pointLat, pointLon);
+        // var bearingToPoint1 = k.calcBearingLL(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon);
+        // var bearingToPoint2 = k.calcBearingLL(pointLat, pointLon, linePoint2_Lat, linePoint2_Lon);
+        // console.log('dbb', distanceToPoint2, bearingToPoint1, bearingToPoint2)
+        // return Math.abs(Math.asin(Math.sin(distanceToPoint2 / k.earthRadius) * Math.sin(bearingToPoint1 - bearingToPoint2)) * k.earthRadius);
+        var p = k.calcPointOnLine(linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, pointLat, pointLon);
+        return Math.sqrt(p.dx * p.dx + p.dy * p.dy);
     }
-    k.calcPointOnLine = function (p, p1, p2, sqDist) {
+    k.calcPointOnLine = function (linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, pointLat, pointLon) {
+        var p = k.latLongToXY(pointLat, pointLon);
+        var p1 = k.latLongToXY(linePoint1_Lat, linePoint1_Lon);
+        var p2 = k.latLongToXY(linePoint2_Lat, linePoint2_Lon);
 		var x = p1.x,
 		    y = p1.y,
 		    dx = p2.x - x,
@@ -88,19 +93,26 @@
 		dx = p.x - x;
 		dy = p.y - y;
 
-		return sqDist ? dx * dx + dy * dy : {x:x, y:y};
-	}
+		return {
+		    x:x,
+		    y:y,
+		    dx:dx,
+		    dy:dy
+		};
+    }
 	k.calcProj4 = function(lat, long) {
 	    var zone = 1 + Math.floor((long + 180)/6);
 	    var srid = 32600 + zone;
 	    var hemisphere = "";
+	    var NS = "N";
 	    if (lat <= 0) {
 	        srid += 100;
 	        hemisphere = " +south"
+	        NS = "S";
 	    }
 	    var name = "EPSG:" + srid;
-	    var proj4String = "+proj=utm +zone=" + zone + hemisphere + " +datum=WGS84 +units=m +no_defs";
-	    proj4.defs[name] = proj4String;
+	    var proj4String = "+title=WGS 84 / UTM zone " + zone + NS + " +proj=utm +zone=" + zone + hemisphere + " +datum=WGS84 +units=m +no_defs";
+	    proj4.defs(name, proj4String);
 	    return {
 	        name:name,
 	        proj4:proj4String,
@@ -108,12 +120,15 @@
 	    };
 	}
 	k.latLongToXY = function(lat, long) {
+	   // console.log(lat, long);
         var proj4Def = k.calcProj4(lat, long);
         var source = new proj4.Proj('EPSG:4326');
         var dest = new proj4.Proj(proj4Def.name);
         var p = new proj4.Point(long, lat);
+        // console.log('point', p)
         proj4.transform(source, dest, p);
         p = new proj4.Point(p.x / 0.3048, p.y / 0.3048);
+        // console.log('point2', p)
         return p
 	}
 </script>
