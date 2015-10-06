@@ -120,15 +120,12 @@
 	    };
 	}
 	k.latLongToXY = function(lat, long) {
-	   // console.log(lat, long);
         var proj4Def = k.calcProj4(lat, long);
-        var source = new proj4.Proj('EPSG:4326');
-        var dest = new proj4.Proj(proj4Def.name);
-        var p = new proj4.Point(long, lat);
-        // console.log('point', p)
-        proj4.transform(source, dest, p);
-        p = new proj4.Point(p.x / 0.3048, p.y / 0.3048);
-        // console.log('point2', p)
+        var coords = {x:long, y:lat};
+        // run proj4 transform - proj4(fromProjection[, toProjection, coordinates])
+        var p = proj4(proj4('EPSG:4326'), proj4(proj4Def.name), coords);
+        p.x = p.x / 0.3048;
+        p.y = p.y / 0.3048;
         return p
 	}
 </script>
