@@ -1,0 +1,119 @@
+<script src="../proj4/dist/proj4-src.js"></script>
+<script>
+    /*global Proj4js*/
+    Proj4js.defs["EPSG:4326"] = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ";
+    var k = k || {};
+    k.earthRadius = 6371000;// Radius of the earth in m
+    
+    //calculates distance between two lat/long points in meters
+    k.calcDistance = function(lat1, lon1, lat2, lon2) {
+        // acos(sin(lat1Rads) * sin(lat3Rads)+cos(lat1Rads)*cos(lat3Rads)*cos(dLon)) * 6371;
+        var radlat1 = Math.PI * lat1 / 180;
+        var radlat2 = Math.PI * lat2 / 180;
+        var radlon1 = Math.PI * lon1 / 180;
+        var radlon2 = Math.PI * lon2 / 180;
+        var dLat = radlat2 - radlat1;
+        var dLon = radlon2 - radlon1;
+        var a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(radlat1) * Math.cos(radlat2) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        var d = k.earthRadius * c; // Distance in m
+        return d;
+    }
+    k.calcMidPoint = function(lat1, lon1, lat2, lon2) {
+        var dLon = (lon2 - lon1) * Math.PI / 180;
+
+        //convert to radians
+        lat1 = (lat1) * Math.PI / 180;
+        lat2 = (lat2) * Math.PI / 180;
+        lon1 = (lon1) * Math.PI / 180;
+
+        var Bx = Math.cos(lat2) * Math.cos(dLon);
+        var By = Math.cos(lat2) * Math.sin(dLon);
+        var lat3 = Math.atan2(Math.sin(lat1) + Math.sin(lat2), Math.sqrt((Math.cos(lat1) + Bx) * (Math.cos(lat1) + Bx) + By * By));
+        var lon3 = lon1 + Math.atan2(By, Math.cos(lat1) + Bx);
+
+        return [
+            lat3 * 180 / Math.PI,
+            lon3 * 180 / Math.PI
+        ]
+    };
+    //calculates bearing in rectangular coordinates (lat / long is complicated and different at each point in the line)
+    k.calcBearing = function(x1, y1, x2, y2) {
+        var dy = y2 - y1;
+        var dx = x2 - x1;
+        var theta = Math.atan2(dy, dx); // range (-PI, PI]
+        theta *= 180 / Math.PI; // rads to degs, range (-180, 180]
+        // if (theta < 0) theta = 360 + theta; // range [0, 360)
+        return theta;
+    };
+    k.calcBearingLL = function(lat1, lon1, lat2, lon2) {
+        var dLon = (lon2 - lon1);
+        var y = Math.sin(dLon) * Math.cos(lat2);
+        var x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+        return Math.atan2(y, x) * 180 / Math.PI;
+    }
+    //  -------- NOT FULLY WORKING ---------------- 
+    // calcuates shortest distance between point and line in meters
+    k.calcDistanceToLine = function(linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, pointLat, pointLon) {
+        console.log(linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, pointLat, pointLon)
+        var distanceToPoint2 = k.calcDistance(linePoint2_Lat, linePoint2_Lon, pointLat, pointLon);
+        var bearingToPoint1 = k.calcBearingLL(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon);
+        var bearingToPoint2 = k.calcBearingLL(pointLat, pointLon, linePoint2_Lat, linePoint2_Lon);
+        console.log('dbb', distanceToPoint2, bearingToPoint1, bearingToPoint2)
+        return Math.abs(Math.asin(Math.sin(distanceToPoint2 / k.earthRadius) * Math.sin(bearingToPoint1 - bearingToPoint2)) * k.earthRadius);
+    }
+    k.calcPointOnLine = function (p, p1, p2, sqDist) {
+		var x = p1.x,
+		    y = p1.y,
+		    dx = p2.x - x,
+		    dy = p2.y - y,
+		    dot = dx * dx + dy * dy,
+		    t;
+
+		if (dot > 0) {
+			t = ((p.x - x) * dx + (p.y - y) * dy) / dot;
+
+			if (t > 1) {
+				x = p2.x;
+				y = p2.y;
+			} else if (t > 0) {
+				x += dx * t;
+				y += dy * t;
+			}
+		}
+
+		dx = p.x - x;
+		dy = p.y - y;
+
+		return sqDist ? dx * dx + dy * dy : {x:x, y:y};
+	}
+	k.calcProj4 = function(lat, long) {
+	    var zone = 1 + Math.floor((long + 180)/6);
+	    var srid = 32600 + zone;
+	    var hemisphere = "";
+	    if (lat <= 0) {
+	        srid += 100;
+	        hemisphere = " +south"
+	    }
+	    var name = "EPSG:" + srid;
+	    var proj4 = "+proj=utm +zone=" + zone + hemisphere + " +datum=WGS84 +units=m +no_defs";
+	    Proj4js.defs[name] = proj4;
+	    return {
+	        name:name,
+	        proj4:proj4,
+	        srid:srid
+	    };
+	}
+	k.latLongToXY = function(lat, long) {
+        var proj4 = k.calcProj4(lat, long);
+        var source = new Proj4js.Proj('EPSG:4326');
+        var dest = new Proj4js.Proj(proj4.name);
+        var p = new Proj4js.Point(long, lat);
+        Proj4js.transform(source, dest, p);
+        p = new Proj4js.Point(p.x / 0.3048, p.y / 0.3048);
+        return p
+	}
+</script>
