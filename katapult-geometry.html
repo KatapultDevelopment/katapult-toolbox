@@ -1,7 +1,7 @@
 <script src="../proj4/dist/proj4-src.js"></script>
 <script>
-    /*global Proj4js*/
-    Proj4js.defs["EPSG:4326"] = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ";
+    /*global proj4*/
+    proj4.defs["EPSG:4326"] = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ";
     var k = k || {};
     k.earthRadius = 6371000;// Radius of the earth in m
     
@@ -99,21 +99,21 @@
 	        hemisphere = " +south"
 	    }
 	    var name = "EPSG:" + srid;
-	    var proj4 = "+proj=utm +zone=" + zone + hemisphere + " +datum=WGS84 +units=m +no_defs";
-	    Proj4js.defs[name] = proj4;
+	    var proj4String = "+proj=utm +zone=" + zone + hemisphere + " +datum=WGS84 +units=m +no_defs";
+	    proj4.defs[name] = proj4String;
 	    return {
 	        name:name,
-	        proj4:proj4,
+	        proj4:proj4String,
 	        srid:srid
 	    };
 	}
 	k.latLongToXY = function(lat, long) {
-        var proj4 = k.calcProj4(lat, long);
-        var source = new Proj4js.Proj('EPSG:4326');
-        var dest = new Proj4js.Proj(proj4.name);
-        var p = new Proj4js.Point(long, lat);
-        Proj4js.transform(source, dest, p);
-        p = new Proj4js.Point(p.x / 0.3048, p.y / 0.3048);
+        var proj4Def = k.calcProj4(lat, long);
+        var source = new proj4.Proj('EPSG:4326');
+        var dest = new proj4.Proj(proj4Def.name);
+        var p = new proj4.Point(long, lat);
+        proj4.transform(source, dest, p);
+        p = new proj4.Point(p.x / 0.3048, p.y / 0.3048);
         return p
 	}
 </script>
