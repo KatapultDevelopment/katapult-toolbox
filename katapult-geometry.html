@@ -1,7 +1,7 @@
 <script src="../proj4/dist/proj4-src.js"></script>
 <script>
     /*global proj4*/
-    proj4.defs["EPSG:4326"] = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ";
+    proj4.defs("EPSG:4326", "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ");
     var k = k || {};
     k.earthRadius = 6371000;// Radius of the earth in m
     
