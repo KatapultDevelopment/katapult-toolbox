@@ -1,7 +1,9 @@
 <script src="../proj4/dist/proj4-src.js"></script>
 <script>
     /*global proj4*/
-    proj4.defs("EPSG:4326", "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ");
+    window.addEventListener('load', function(){
+        proj4.defs('4326', "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ");
+    });
     var k = k || {};
     k.earthRadius = 6371000;// Radius of the earth in m
     
@@ -55,23 +57,25 @@
         var x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
         return Math.atan2(y, x) * 180 / Math.PI;
     }
-    //  -------- NOT FULLY WORKING ---------------- 
     // calcuates shortest distance between point and line in meters
-    k.calcDistanceToLine = function(linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, pointLat, pointLon) {
-        // console.log(linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, pointLat, pointLon)
-        // var distanceToPoint2 = k.calcDistance(linePoint2_Lat, linePoint2_Lon, pointLat, pointLon);
-        // var bearingToPoint1 = k.calcBearingLL(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon);
-        // var bearingToPoint2 = k.calcBearingLL(pointLat, pointLon, linePoint2_Lat, linePoint2_Lon);
-        // console.log('dbb', distanceToPoint2, bearingToPoint1, bearingToPoint2)
-        // return Math.abs(Math.asin(Math.sin(distanceToPoint2 / k.earthRadius) * Math.sin(bearingToPoint1 - bearingToPoint2)) * k.earthRadius);
-        var p = k.calcPointOnLine(linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, pointLat, pointLon);
-        return Math.sqrt(p.dx * p.dx + p.dy * p.dy);
-    }
-    k.calcPointOnLine = function (linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, pointLat, pointLon) {
+    k.calcDistanceToLine = function(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon) {
         var p = k.latLongToXY(pointLat, pointLon);
-        var p1 = k.latLongToXY(linePoint1_Lat, linePoint1_Lon);
-        var p2 = k.latLongToXY(linePoint2_Lat, linePoint2_Lon);
-		var x = p1.x,
+        var p1 = k.latLongToXY(linePoint1_Lat, linePoint1_Lon, p.srid);
+        var p2 = k.latLongToXY(linePoint2_Lat, linePoint2_Lon, p.srid);
+		var pointOnLine = k.snapToLineXY(p, p1, p2);
+        return Math.sqrt(pointOnLine.dx * pointOnLine.dx + pointOnLine.dy * pointOnLine.dy);
+    }
+    k.snapToLine = function(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon) {
+        var p = k.latLongToXY(pointLat, pointLon);
+        var p1 = k.latLongToXY(linePoint1_Lat, linePoint1_Lon, p.srid);
+        var p2 = k.latLongToXY(linePoint2_Lat, linePoint2_Lon, p.srid);
+        console.log(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, p, p1, p2);
+		var pointOnLine = k.snapToLineXY(p, p1, p2);
+		pointOnLine.srid = p.srid;
+		return k.xyToLatLong(pointOnLine);
+    }
+    k.snapToLineXY = function(p, p1, p2) {
+        var x = p1.x,
 		    y = p1.y,
 		    dx = p2.x - x,
 		    dy = p2.y - y,
@@ -99,7 +103,7 @@
 		    dx:dx,
 		    dy:dy
 		};
-    }
+    };
 	k.calcProj4 = function(lat, long) {
 	    var zone = 1 + Math.floor((long + 180)/6);
 	    var srid = 32600 + zone;
@@ -110,22 +114,47 @@
 	        hemisphere = " +south"
 	        NS = "S";
 	    }
-	    var name = "EPSG:" + srid;
-	    var proj4String = "+title=WGS 84 / UTM zone " + zone + NS + " +proj=utm +zone=" + zone + hemisphere + " +datum=WGS84 +units=m +no_defs";
-	    proj4.defs(name, proj4String);
+	    // Turn SRID into a string for proj4js indexing
+	    srid += '';
+	    var proj4String = "+title=WGS 84 / UTM zone " + zone + NS + " +proj=utm +zone=" + zone + hemisphere + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs";
+	    proj4.defs(srid, proj4String);
 	    return {
-	        name:name,
-	        proj4:proj4String,
-	        srid:srid
+	        srid:srid,
+	        proj4:proj4String
 	    };
 	}
-	k.latLongToXY = function(lat, long) {
-        var proj4Def = k.calcProj4(lat, long);
+	//k.latLongToXY(lat, long[, srid]) - pass lat and long and it will be projected into correct UTM zone
+	//   optionally pass srid to project into that coordinate system
+	//   returns {x:x, y:y, srid:srid}
+	// TODO make it work with srid's that weren't previously calculated by the library
+	k.latLongToXY = function(lat, long, srid) {
+        srid = srid || k.calcProj4(lat, long).srid;
         var coords = {x:long, y:lat};
         // run proj4 transform - proj4(fromProjection[, toProjection, coordinates])
-        var p = proj4(proj4('EPSG:4326'), proj4(proj4Def.name), coords);
-        p.x = p.x / 0.3048;
-        p.y = p.y / 0.3048;
-        return p
+        var transformed = proj4(proj4('4326'), proj4(srid), coords);
+        transformed.x = transformed.x;
+        transformed.y = transformed.y;
+        transformed.srid = srid;
+        return transformed
+	}
+	//k.xyToLatLong(xOrPoint[, y, srid]) - pass a point {x:x, y:y, srid:srid} or x, y, srid
+	//    srid should be the epsg srid of the projected points
+	//    returns {lat:lat, long:long}
+	// TODO make it work with srid's that weren't previously calculated by the library
+	k.xyToLatLong = function(xOrPoint, y, srid) {
+	    var point = xOrPoint;
+	    if (typeof xOrPoint != 'object') {
+	        point = {
+	            x:xOrPoint,
+	            y:y,
+	            srid:srid
+	        };
+	    }
+	    console.log('xyToLatLong', point)
+	    var transformed = proj4(proj4(point.srid), proj4('4326'), point);
+	    return {
+	        lat:transformed.y,
+	        long:transformed.x
+	    }
 	}
 </script>
