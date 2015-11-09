@@ -42,7 +42,7 @@
             lon3 * 180 / Math.PI
         ]
     };
-    //calculates bearing in rectangular coordinates (lat / long is complicated and different at each point in the line)
+    //calculates bearing in rectangular coordinates
     k.calcBearing = function(x1, y1, x2, y2) {
         var dy = y2 - y1;
         var dx = x2 - x1;
@@ -52,6 +52,10 @@
         return theta;
     };
     k.calcBearingLL = function(lat1, lon1, lat2, lon2) {
+        lat1 = lat1 * Math.PI / 180;
+        lon1 = lon1 * Math.PI / 180;
+        lat2 = lat2 * Math.PI / 180;
+        lon2 = lon2 * Math.PI / 180;
         var dLon = (lon2 - lon1);
         var y = Math.sin(dLon) * Math.cos(lat2);
         var x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
@@ -157,4 +161,6 @@
 	        long:transformed.x
 	    }
 	}
+	
+	
 </script>
