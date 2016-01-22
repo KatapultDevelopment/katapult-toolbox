@@ -59,7 +59,9 @@
         var dLon = (lon2 - lon1);
         var y = Math.sin(dLon) * Math.cos(lat2);
         var x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-        return Math.atan2(y, x) * 180 / Math.PI;
+        var theta = Math.atan2(y, x) * 180 / Math.PI;
+        if (theta < 0) theta = 360 + theta; // range [0, 360)
+        return theta;
     }
     // calcuates shortest distance between point and line in meters
     k.calcDistanceToLine = function(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon) {
