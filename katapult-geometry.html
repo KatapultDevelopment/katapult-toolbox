@@ -1,187 +1,192 @@
 <script src="../proj4/dist/proj4-src.js"></script>
 <script>
     /*global proj4*/
-    window.addEventListener('load', function(){
+    window.addEventListener('load', function() {
         proj4.defs('4326', "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ");
     });
     var k = k || {};
-    k.earthRadius = 6371000;// Radius of the earth in m
-    
+
     //calculates distance between two lat/long points in meters
     k.calcDistance = function(lat1, lon1, lat2, lon2) {
-        // acos(sin(lat1Rads) * sin(lat3Rads)+cos(lat1Rads)*cos(lat3Rads)*cos(dLon)) * 6371;
-        var radlat1 = Math.PI * lat1 / 180;
-        var radlat2 = Math.PI * lat2 / 180;
-        var radlon1 = Math.PI * lon1 / 180;
-        var radlon2 = Math.PI * lon2 / 180;
-        var dLat = radlat2 - radlat1;
-        var dLon = radlon2 - radlon1;
-        var a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(radlat1) * Math.cos(radlat2) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        var d = k.earthRadius * c; // Distance in m
-        return d;
-    }
-    k.calcMidPoint = function(lat1, lon1, lat2, lon2) {
-        var dLon = (lon2 - lon1) * Math.PI / 180;
-
-        //convert to radians
-        lat1 = (lat1) * Math.PI / 180;
-        lat2 = (lat2) * Math.PI / 180;
-        lon1 = (lon1) * Math.PI / 180;
-
-        var Bx = Math.cos(lat2) * Math.cos(dLon);
-        var By = Math.cos(lat2) * Math.sin(dLon);
-        var lat3 = Math.atan2(Math.sin(lat1) + Math.sin(lat2), Math.sqrt((Math.cos(lat1) + Bx) * (Math.cos(lat1) + Bx) + By * By));
-        var lon3 = lon1 + Math.atan2(By, Math.cos(lat1) + Bx);
-
-        return [
-            lat3 * 180 / Math.PI,
-            lon3 * 180 / Math.PI
-        ]
+        var p1 = k.latLongToXY(lat1, lon1);
+        var p2 = k.latLongToXY(lat2, lon2, p1.srid);
+        return k.calcDistanceXY(p1, p2);
     };
-    //calculates bearing in rectangular coordinates
-    k.calcBearing = function(x1, y1, x2, y2) {
-        var dy = y2 - y1;
-        var dx = x2 - x1;
+    k.calcDistanceXY = function(p1, p2) {
+        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2))
+    };
+    k.calcMidPoint = function(lat1, lon1, lat2, lon2) {
+        var p1 = k.latLongToXY(lat1, lon1);
+        var p2 = k.latLongToXY(lat1, lon1, p1.srid);
+        var midpoint = k.calcMidpointXY(p1, p2);
+        midpoint.srid = p1.srid;
+        return k.xyToLatLong(midpoint);
+    };
+    k.calcMidPointXY = function(p1, p2) {
+        return {
+            x: (p1.x + p2.x) / 2,
+            y: (p1.y + p2.y) / 2
+        }
+    }
+    k.calcBearing = function(lat1, lon1, lat2, lon2) {
+        var p1 = k.latLongToXY(lat1, lon1);
+        var p2 = k.latLongToXY(lat2, lon2, p1.srid);
+        return k.calcBearingXY(p1, p2);
+    };
+    k.calcBearingXY = function(p1, p2) {
+        var dy = p2.y - p1.y;
+        var dx = p2.x - p1.x;
         var theta = Math.atan2(dy, dx); // range (-PI, PI]
         theta *= 180 / Math.PI; // rads to degs, range (-180, 180]
-        // if (theta < 0) theta = 360 + theta; // range [0, 360)
+        theta = 90 - theta; // 0 deg = North
+        if (theta < 0) theta = 360 + theta; // range [0, 360)-
         return theta;
     };
+    //Depricated, Use k.calcBearing
     k.calcBearingLL = function(lat1, lon1, lat2, lon2) {
-        lat1 = lat1 * Math.PI / 180;
-        lon1 = lon1 * Math.PI / 180;
-        lat2 = lat2 * Math.PI / 180;
-        lon2 = lon2 * Math.PI / 180;
-        var dLon = (lon2 - lon1);
-        var y = Math.sin(dLon) * Math.cos(lat2);
-        var x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-        var theta = Math.atan2(y, x) * 180 / Math.PI;
-        if (theta < 0) theta = 360 + theta; // range [0, 360)
-        return theta;
-    }
+        return k.calcBearing(lat1, lon1, lat2, lon2);
+    };
     // calcuates shortest distance between point and line in meters
     k.calcDistanceToLine = function(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon) {
         var p = k.latLongToXY(pointLat, pointLon);
         var p1 = k.latLongToXY(linePoint1_Lat, linePoint1_Lon, p.srid);
         var p2 = k.latLongToXY(linePoint2_Lat, linePoint2_Lon, p.srid);
-		var pointOnLine = k.snapToLineXY(p, p1, p2);
+        var pointOnLine = k.snapToLineXY(p, p1, p2);
         return Math.sqrt(pointOnLine.dx * pointOnLine.dx + pointOnLine.dy * pointOnLine.dy);
-    }
-    k.snapToLine = function(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon) {
+    };
+    k.snapToLine = function(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, allowOverflow) {
         var p = k.latLongToXY(pointLat, pointLon);
         var p1 = k.latLongToXY(linePoint1_Lat, linePoint1_Lon, p.srid);
         var p2 = k.latLongToXY(linePoint2_Lat, linePoint2_Lon, p.srid);
-        console.log(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, p, p1, p2);
-		var pointOnLine = k.snapToLineXY(p, p1, p2);
-		pointOnLine.srid = p.srid;
-		return k.xyToLatLong(pointOnLine);
-    }
-    k.snapToLineXY = function(p, p1, p2) {
-        var x = p1.x,
-		    y = p1.y,
-		    dx = p2.x - x,
-		    dy = p2.y - y,
-		    dot = dx * dx + dy * dy,
-		    t;
-
-		if (dot > 0) {
-			t = ((p.x - x) * dx + (p.y - y) * dy) / dot;
-
-			if (t > 1) {
-				x = p2.x;
-				y = p2.y;
-			} else if (t > 0) {
-				x += dx * t;
-				y += dy * t;
-			}
-		}
-
-		dx = p.x - x;
-		dy = p.y - y;
-
-		return {
-		    x:x,
-		    y:y,
-		    dx:dx,
-		    dy:dy
-		};
+        var pointOnLine = k.snapToLineXY(p, p1, p2, allowOverflow);
+        pointOnLine.srid = p.srid;
+        return k.xyToLatLong(pointOnLine);
     };
-	k.calcProj4 = function(lat, long) {
-	    var zone = 1 + Math.floor((long + 180)/6);
-	    var srid = 32600 + zone;
-	    var hemisphere = "";
-	    var NS = "N";
-	    if (lat <= 0) {
-	        srid += 100;
-	        hemisphere = " +south"
-	        NS = "S";
-	    }
-	    // Turn SRID into a string for proj4js indexing
-	    srid += '';
-	    var proj4String = "+title=WGS 84 / UTM zone " + zone + NS + " +proj=utm +zone=" + zone + hemisphere + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs";
-	    proj4.defs(srid, proj4String);
-	    return {
-	        srid:srid,
-	        proj4:proj4String
-	    };
-	}
-	//k.latLongToXY(lat, long[, srid]) - pass lat and long and it will be projected into correct UTM zone
-	//   optionally pass srid to project into that coordinate system
-	//   returns {x:x, y:y, srid:srid}
-	// TODO make it work with srid's that weren't previously calculated by the library
-	k.latLongToXY = function(lat, long, srid) {
+    k.snapToLineXY = function(p, p1, p2, allowOverflow) {
+        var x = p1.x,
+            y = p1.y,
+            dx = p2.x - x,
+            dy = p2.y - y,
+            dot = dx * dx + dy * dy,
+            t;
+
+        if (dot > 0) {
+            t = ((p.x - x) * dx + (p.y - y) * dy) / dot;
+
+            if (t > 1 && !allowOverflow) {
+                x = p2.x;
+                y = p2.y;
+            }
+            else if (t > 0) {
+                x += dx * t;
+                y += dy * t;
+            }
+        }
+
+        dx = p.x - x;
+        dy = p.y - y;
+
+        return {
+            x: x,
+            y: y,
+            dx: dx,
+            dy: dy
+        };
+    };
+    k.snapToCircle = function(pointLat, pointLon, centerLat, centerLon, radius_meters) {
+        var point = k.latLongToXY(pointLat, pointLon);
+        var center = k.latLongToXY(centerLat, centerLon, point.srid);
+        var pointOnCircle = k.snapToCircleXY(point, center, radius_meters);
+        pointOnCircle.srid = point.srid;
+        return k.xyToLatLong(pointOnCircle);
+    };
+    k.snapToCircleXY = function(point, center, radius) {
+        // where P is the point, C is the center, and R is the radius:
+        // V = (P - C); Answer = C + V / |V| * R;
+        // where |V| is length of V.
+        var vX = point.x - center.x;
+        var vY = point.y - center.y;
+        var magV = Math.sqrt(vX*vX + vY*vY);
+        var aX = center.x + vX / magV * radius;
+        var aY = center.y + vY / magV * radius;
+        return {
+            x:aX,
+            y:aY
+        };
+    };
+    k.calcProj4 = function(lat, long) {
+        var zone = 1 + Math.floor((long + 180) / 6);
+        var srid = 32600 + zone;
+        var hemisphere = "";
+        var NS = "N";
+        if (lat <= 0) {
+            srid += 100;
+            hemisphere = " +south";
+            NS = "S";
+        }
+        // Turn SRID into a string for proj4js indexing
+        srid += '';
+        var proj4String = "+title=WGS 84 / UTM zone " + zone + NS + " +proj=utm +zone=" + zone + hemisphere + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs";
+        proj4.defs(srid, proj4String);
+        return {
+            srid: srid,
+            proj4: proj4String
+        };
+    };
+    //k.latLongToXY(lat, long[, srid]) - pass lat and long and it will be projected into correct UTM zone
+    //   optionally pass srid to project into that coordinate system
+    //   returns {x:x, y:y, srid:srid}
+    // TODO make it work with srid's that weren't previously calculated by the library
+    k.latLongToXY = function(lat, long, srid) {
         srid = srid || k.calcProj4(lat, long).srid;
-        var coords = {x:long, y:lat};
+        var coords = {
+            x: long,
+            y: lat
+        };
         // run proj4 transform - proj4(fromProjection[, toProjection, coordinates])
         var transformed = proj4(proj4('4326'), proj4(srid), coords);
         transformed.x = transformed.x;
         transformed.y = transformed.y;
         transformed.srid = srid;
-        return transformed
-	}
-	//k.xyToLatLong(xOrPoint[, y, srid]) - pass a point {x:x, y:y, srid:srid} or x, y, srid
-	//    srid should be the epsg srid of the projected points
-	//    returns {lat:lat, long:long}
-	// TODO make it work with srid's that weren't previously calculated by the library
-	k.xyToLatLong = function(xOrPoint, y, srid) {
-	    var point = xOrPoint;
-	    if (typeof xOrPoint != 'object') {
-	        point = {
-	            x:xOrPoint,
-	            y:y,
-	            srid:srid
-	        };
-	    }
-	    console.log('xyToLatLong', point)
-	    var transformed = proj4(proj4(point.srid), proj4('4326'), point);
-	    return {
-	        lat:transformed.y,
-	        long:transformed.x
-	    }
-	}
-	// round a number to a given decimal place
-	k.round = function(value, exp) {
-      if (typeof exp === 'undefined' || +exp === 0)
-        return Math.round(value);
-    
-      value = +value;
-      exp = +exp;
-    
-      if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0))
-        return NaN;
-    
-      // Shift
-      value = value.toString().split('e');
-      value = Math.round(+(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp)));
-    
-      // Shift back
-      value = value.toString().split('e');
-      return +(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp));
+        return transformed;
     };
-	
-	
+    //k.xyToLatLong(xOrPoint[, y, srid]) - pass a point {x:x, y:y, srid:srid} or x, y, srid
+    //    srid should be the epsg srid of the projected points
+    //    returns {lat:lat, long:long}
+    // TODO make it work with srid's that weren't previously calculated by the library
+    k.xyToLatLong = function(xOrPoint, y, srid) {
+        var point = xOrPoint;
+        if (typeof xOrPoint != 'object') {
+            point = {
+                x: xOrPoint,
+                y: y,
+                srid: srid
+            };
+        }
+        console.log('xyToLatLong', point);
+        var transformed = proj4(proj4(point.srid), proj4('4326'), point);
+        return {
+            lat: transformed.y,
+            long: transformed.x
+        };
+    };
+    // round a number to a given decimal place
+    k.round = function(value, exp) {
+        if (typeof exp === 'undefined' || +exp === 0)
+            return Math.round(value);
+
+        value = +value;
+        exp = +exp;
+
+        if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0))
+            return NaN;
+
+        // Shift
+        value = value.toString().split('e');
+        value = Math.round(+(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp)));
+
+        // Shift back
+        value = value.toString().split('e');
+        return +(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp));
+    };
 </script>
