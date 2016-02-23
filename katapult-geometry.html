@@ -18,7 +18,7 @@
     k.calcMidPoint = function(lat1, lon1, lat2, lon2) {
         var p1 = k.latLongToXY(lat1, lon1);
         var p2 = k.latLongToXY(lat1, lon1, p1.srid);
-        var midpoint = k.calcMidpointXY(p1, p2);
+        var midpoint = k.calcMidPointXY(p1, p2);
         midpoint.srid = p1.srid;
         return k.xyToLatLong(midpoint);
     };
