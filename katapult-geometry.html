@@ -8,34 +8,34 @@
 
     //calculates distance between two lat/long points in meters
     k.calcDistance = function(lat1, lon1, lat2, lon2) {
-        var p1 = k.latLongToXY(lat1, lon1);
-        var p2 = k.latLongToXY(lat2, lon2, p1.srid);
+        var p1 = k.latLongToXY(Number(lat1), Number(lon1));
+        var p2 = k.latLongToXY(Number(lat2), Number(lon2), p1.srid);
         return k.calcDistanceXY(p1, p2);
     };
     k.calcDistanceXY = function(p1, p2) {
-        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2))
+        return Math.sqrt(Math.pow(Number(p1.x) - Number(p2.x), 2) + Math.pow(Number(p1.y) - Number(p2.y), 2))
     };
     k.calcMidPoint = function(lat1, lon1, lat2, lon2) {
-        var p1 = k.latLongToXY(lat1, lon1);
-        var p2 = k.latLongToXY(lat2, lon2, p1.srid);
+        var p1 = k.latLongToXY(Number(lat1), Number(lon1));
+        var p2 = k.latLongToXY(Number(lat2), Number(lon2), p1.srid);
         var midpoint = k.calcMidPointXY(p1, p2);
         midpoint.srid = p1.srid;
         return k.xyToLatLong(midpoint);
     };
     k.calcMidPointXY = function(p1, p2) {
         return {
-            x: (p1.x + p2.x) / 2,
-            y: (p1.y + p2.y) / 2
+            x: (Number(p1.x) + Number(p2.x)) / 2,
+            y: (Number(p1.y) + Number(p2.y)) / 2
         }
     }
     k.calcBearing = function(lat1, lon1, lat2, lon2) {
-        var p1 = k.latLongToXY(lat1, lon1);
-        var p2 = k.latLongToXY(lat2, lon2, p1.srid);
+        var p1 = k.latLongToXY(Number(lat1), Number(lon1));
+        var p2 = k.latLongToXY(Number(lat2), Number(lon2), p1.srid);
         return k.calcBearingXY(p1, p2);
     };
     k.calcBearingXY = function(p1, p2) {
-        var dy = p2.y - p1.y;
-        var dx = p2.x - p1.x;
+        var dy = Number(p2.y) - Number(p1.y);
+        var dx = Number(p2.x) - Number(p1.x);
         var theta = Math.atan2(dy, dx); // range (-PI, PI]
         theta *= 180 / Math.PI; // rads to degs, range (-180, 180]
         theta = 90 - theta; // 0 deg = North
@@ -44,38 +44,38 @@
     };
     //Depricated, Use k.calcBearing
     k.calcBearingLL = function(lat1, lon1, lat2, lon2) {
-        return k.calcBearing(lat1, lon1, lat2, lon2);
+        return k.calcBearing(Number(lat1), Number(lon1), Number(lat2), Number(lon2));
     };
     // calcuates shortest distance between point and line in meters
     k.calcDistanceToLine = function(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon) {
-        var p = k.latLongToXY(pointLat, pointLon);
-        var p1 = k.latLongToXY(linePoint1_Lat, linePoint1_Lon, p.srid);
-        var p2 = k.latLongToXY(linePoint2_Lat, linePoint2_Lon, p.srid);
+        var p = k.latLongToXY(Number(pointLat), Number(pointLon));
+        var p1 = k.latLongToXY(Number(linePoint1_Lat), Number(linePoint1_Lon), p.srid);
+        var p2 = k.latLongToXY(Number(linePoint2_Lat), Number(linePoint2_Lon), p.srid);
         var pointOnLine = k.snapToLineXY(p, p1, p2);
         return Math.sqrt(pointOnLine.dx * pointOnLine.dx + pointOnLine.dy * pointOnLine.dy);
     };
     k.snapToLine = function(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, allowOverflow) {
-        var p = k.latLongToXY(pointLat, pointLon);
-        var p1 = k.latLongToXY(linePoint1_Lat, linePoint1_Lon, p.srid);
-        var p2 = k.latLongToXY(linePoint2_Lat, linePoint2_Lon, p.srid);
+        var p = k.latLongToXY(Number(pointLat), Number(pointLon));
+        var p1 = k.latLongToXY(Number(linePoint1_Lat), Number(linePoint1_Lon), p.srid);
+        var p2 = k.latLongToXY(Number(linePoint2_Lat), Number(linePoint2_Lon), p.srid);
         var pointOnLine = k.snapToLineXY(p, p1, p2, allowOverflow);
         pointOnLine.srid = p.srid;
         return k.xyToLatLong(pointOnLine);
     };
     k.snapToLineXY = function(p, p1, p2, allowOverflow) {
-        var x = p1.x,
-            y = p1.y,
-            dx = p2.x - x,
-            dy = p2.y - y,
+        var x = Number(p1.x),
+            y = Number(p1.y),
+            dx = Number(p2.x) - x,
+            dy = Number(p2.y) - y,
             dot = dx * dx + dy * dy,
             t;
 
         if (dot > 0) {
-            t = ((p.x - x) * dx + (p.y - y) * dy) / dot;
+            t = ((Number(p.x) - x) * dx + (Number(p.y) - y) * dy) / dot;
 
             if (t > 1 && !allowOverflow) {
-                x = p2.x;
-                y = p2.y;
+                x = Number(p2.x);
+                y = Number(p2.y);
             }
             else if (t > 0) {
                 x += dx * t;
@@ -83,8 +83,8 @@
             }
         }
 
-        dx = p.x - x;
-        dy = p.y - y;
+        dx = Number(p.x) - x;
+        dy = Number(p.y) - y;
 
         return {
             x: x,
@@ -94,8 +94,8 @@
         };
     };
     k.snapToCircle = function(pointLat, pointLon, centerLat, centerLon, radius_meters) {
-        var point = k.latLongToXY(pointLat, pointLon);
-        var center = k.latLongToXY(centerLat, centerLon, point.srid);
+        var point = k.latLongToXY(Number(pointLat), Number(pointLon));
+        var center = k.latLongToXY(Number(centerLat), Number(centerLon), point.srid);
         var pointOnCircle = k.snapToCircleXY(point, center, radius_meters);
         pointOnCircle.srid = point.srid;
         return k.xyToLatLong(pointOnCircle);
@@ -104,22 +104,22 @@
         // where P is the point, C is the center, and R is the radius:
         // V = (P - C); Answer = C + V / |V| * R;
         // where |V| is length of V.
-        var vX = point.x - center.x;
-        var vY = point.y - center.y;
+        var vX = Number(point.x) - Number(center.x);
+        var vY = Number(point.y) - Number(center.y);
         var magV = Math.sqrt(vX*vX + vY*vY);
-        var aX = center.x + vX / magV * radius;
-        var aY = center.y + vY / magV * radius;
+        var aX = Number(center.x) + vX / magV * radius;
+        var aY = Number(center.y) + vY / magV * radius;
         return {
             x:aX,
             y:aY
         };
     };
     k.calcProj4 = function(lat, long) {
-        var zone = 1 + Math.floor((long + 180) / 6);
+        var zone = 1 + Math.floor((Number(long) + 180) / 6);
         var srid = 32600 + zone;
         var hemisphere = "";
         var NS = "N";
-        if (lat <= 0) {
+        if (Number(lat) <= 0) {
             srid += 100;
             hemisphere = " +south";
             NS = "S";
