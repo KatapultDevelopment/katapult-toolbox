@@ -2,7 +2,7 @@
 <script>
     /*global proj4*/
     window.addEventListener('load', function() {
-        proj4.defs('4326', "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ");
+        proj4.defs('EPSG:4326', "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ");
     });
     var k = k || {};
 
@@ -93,6 +93,29 @@
             dy: dy
         };
     };
+    // Snap Point lat and long, Center Point lat and long, optional distance in meters, and optional bearing [0 - 360] with 0 at North
+    k.snapPosition = function(pointLat, pointLon, centerLat, centerLon, distance_meters, bearing) {
+        var center = k.latLongToXY(centerLat, centerLon);
+        var point = k.latLongToXY(pointLat, pointLon, center.srid);
+        var snapPoint = k.snapPositionXY(point, center, distance_meters, bearing);
+        snapPoint.srid = center.srid;
+        return k.xyToLatLong(snapPoint);
+    };
+    k.snapPositionXY = function(point, center, distance_meters, bearing) {
+        if (distance_meters == null) {
+            distance_meters = k.calcDistanceXY(center, point);
+        }
+        if (bearing == null) {
+            bearing = k.calcBearingXY(center, point);
+        }
+        var mathBearing = (90 - bearing) * Math.PI / 180;
+        var utmX = distance_meters * Math.cos(mathBearing) + center.x;
+        var utmY = distance_meters * Math.sin(mathBearing) + center.y;
+        return {
+            x:utmX,
+            y:utmY
+        };
+    };
     k.snapToCircle = function(pointLat, pointLon, centerLat, centerLon, radius_meters) {
         var point = k.latLongToXY(Number(pointLat), Number(pointLon));
         var center = k.latLongToXY(Number(centerLat), Number(centerLon), point.srid);
@@ -144,7 +167,7 @@
             y: lat
         };
         // run proj4 transform - proj4(fromProjection[, toProjection, coordinates])
-        var transformed = proj4(proj4('4326'), proj4(srid), coords);
+        var transformed = proj4(proj4('EPSG:4326'), proj4(srid), coords);
         transformed.x = transformed.x;
         transformed.y = transformed.y;
         transformed.srid = srid;
@@ -163,8 +186,7 @@
                 srid: srid
             };
         }
-        console.log('xyToLatLong', point);
-        var transformed = proj4(proj4(point.srid), proj4('4326'), point);
+        var transformed = proj4(proj4(point.srid), proj4('EPSG:4326'), point);
         return {
             lat: transformed.y,
             long: transformed.x
@@ -188,5 +210,91 @@
         // Shift back
         value = value.toString().split('e');
         return +(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp));
+    };
+    // Given points p1 and p2, calculate the vector starting at p1 and ending at p2
+    k.calculateVector = function (p1, p2) {
+        return {
+            x: p2.x - p1.x,
+            y: p2.y - p1.y
+        };
+    };
+    // Given two vectors v1 and v2, add vector v2 to v1
+    k.addVectors = function(v1, v2) {
+        return {
+            x: v1.x + v2.x,
+            y: v1.y + v2.y
+        };
+    };
+    // Given two vectors v1 and v2, subtract vector v2 from v1
+    k.subtractVectors = function (v1, v2) {
+        return {
+            x: v1.x - v2.x,
+            y: v1.y - v2.y
+        };
+    };
+    // Calculate the dot product of vectors v1 and v2
+    k.dotProduct = function (v1, v2) {
+        return v1.x * v2.x + v1.y * v2.y;
+    };
+    // Calculate the unit vector of a vector
+    k.calculateUnitVector = function (vector) {
+        var norm = k.vectorNorm(vector);
+        if (norm != 0) {
+            return {
+                x: vector.x / norm,
+                y: vector.y / norm
+            };
+        }
+    };
+    // Calculate the norm of a vector
+    k.vectorNorm = function (vector) {
+        return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
+    };
+    // Project vector v1 onto v2
+    k.projectVectors = function (v1, v2) {// projects v1 onto v2
+        var norm = k.vectorNorm(v2);
+        if (norm != 0) {
+            var r = k.dotProduct(v1, v2) / Math.pow(norm, 2);
+            if (r > 0.99999999999 && r < 1.00000000001) {
+                // fix rounding error
+                return {
+                    x: v2.x,
+                    y: v2.y
+                };
+            }
+            else if (r > -1e-11 && r < 1e-11) {
+                // fix rounding error
+                return {
+                    x: 0,
+                    y: 0
+                };
+            }
+            else {
+                return {
+                    x: r * v2.x,
+                    y: r * v2.y
+                };
+            }
+        } else {
+            return {
+                x: v1.x,
+                y: v1.y
+            };
+        }
+    };
+    // Scale a vector by c
+    k.scaleVector = function (c, vector) {
+        return {
+            x: c * vector.x,
+            y: c * vector.y
+        };
+    };
+    // Starting a point p, add move by a vector
+    k.calculatePointFromVector = function (p, vector) {
+        return {
+            x: p.x + vector.x,
+            y: p.y + vector.y,
+            srid: p.srid
+        };
     };
 </script>
