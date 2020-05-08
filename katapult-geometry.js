@@ -1,4 +1,4 @@
-import 'proj4';
+import proj4 from 'proj4';
 
 /*global proj4*/
 window.addEventListener('load', function() {
