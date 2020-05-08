@@ -1,5 +1,6 @@
 # katapult-toolbox
 katapult-geometry.js - Javascript GIS Mapping Calculations
+
 katapult-functions.js - misc useful helper functions
 
 ## NPM Support
@@ -8,6 +9,7 @@ Versions 2.0.0 and higher use ES6 modules. For the html imports version, see ver
 ## Installation
 Install with npm
 ```npm install --save https://github.com/KatapultDevelopment/katapult-toolbox.git```
+
 Then import the modules you need
 ```javascript
 import 'katapult-toolbox/katapult-functions.js'
