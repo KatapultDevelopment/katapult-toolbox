@@ -1,0 +1,22 @@
+{
+  "name": "katapult-toolbox",
+  "version": "2.0.0",
+  "description": "Javascript GIS Mapping Calculations and misc useful helper functions",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KatapultDevelopment/katapult-toolbox.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KatapultDevelopment/katapult-toolbox/issues"
+  },
+  "homepage": "https://github.com/KatapultDevelopment/katapult-toolbox#readme",
+  "dependencies": {
+    "proj4": "^2.6.1"
+  }
+}

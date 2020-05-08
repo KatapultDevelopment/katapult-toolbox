@@ -1,15 +1,17 @@
 # katapult-toolbox
-katapult-geometry - Javascript GIS Mapping Calculations
-katapult-functions - misc useful helper functions
+katapult-geometry.js - Javascript GIS Mapping Calculations
+katapult-functions.js - misc useful helper functions
+
+## NPM Support
+Versions 2.0.0 and higher use ES6 modules. For the html imports version, see version 1.1.6.
 
 ## Installation
-1. Make Sure you have NodeJs and NPM installed
-2. Install Bower ```npm install bower -g```
-3. Then install this library with ```bower install --save KatapultDevelopment/katapult-toolbox```
-4. Include in your html with an HTML Import:
-```html
-<link rel="import" href="../bower_components/katapult-toolbox/katapult-geometry.html" />
-<link rel="import" href="../bower_components/katapult-toolbox/katapult-functions.html" />
+Install with npm
+```npm install --save https://github.com/KatapultDevelopment/katapult-toolbox.git```
+Then import the modules you need
+```javascript
+import 'katapult-toolbox/katapult-functions.js'
+import 'katapult-toolbox/katapult-geometry.js'
 ```
 
 ##Usage 
