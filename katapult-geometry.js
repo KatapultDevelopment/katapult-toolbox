@@ -298,3 +298,16 @@ self.k.calculatePointFromVector = function (p, vector) {
         srid: p.srid
     };
 };
+self.k.interpolate = function(lat1, lon1, lat2, lon2, percent) {
+    var p1 = self.k.latLongToXY(Number(lat1), Number(lon1));
+    var p2 = self.k.latLongToXY(Number(lat2), Number(lon2), p1.srid);
+    var position = self.k.interpolateXY(p1, p2, percent);
+    position.srid = p1.srid;
+    return self.k.xyToLatLong(position);
+}
+self.k.interpolateXY = function(p1, p2, percent) {
+    return {
+        x: Number(p1.x) + (Number(p2.x) - Number(p1.x)) * percent,
+        y: Number(p1.y) + (Number(p2.y) - Number(p1.y)) * percent,
+    }
+}
