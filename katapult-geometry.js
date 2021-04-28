@@ -298,3 +298,35 @@ self.k.calculatePointFromVector = function (p, vector) {
         srid: p.srid
     };
 };
+// Adapted from:
+// line intercept math by Paul Bourke http://paulbourke.net/geometry/pointlineplane/
+// Determine the intersection point of two line segments
+// Return FALSE if the lines don't intersect
+self.k.intersect = function(p1, p2, p3, p4) {
+
+  // Check if none of the lines are of length 0
+	if ((p1.x === p2.x && p1.y === p2.y) || (p3.x === p4.x && p3.y === p4.y)) {
+		return false
+	}
+
+	let denominator = ((p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y))
+
+  // Lines are parallel
+	if (denominator === 0) {
+		return false
+	}
+
+	let ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / denominator
+	let ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / denominator
+
+  // is the intersection along the segments
+	if (ua < 0 || ua > 1 || ub < 0 || ub > 1) {
+		return false
+	}
+
+  // Return a object with the x and y coordinates of the intersection
+	let x = p1.x + ua * (p2.x - p1.x)
+	let y = p1.y + ua * (p2.y - p1.y)
+
+	return {x, y}
+};
