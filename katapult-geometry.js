@@ -1,40 +1,35 @@
 import proj4 from 'proj4';
 
-/*global proj4*/
-window.addEventListener('load', function() {
-    proj4.defs('EPSG:4326', "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ");
-});
-
-self.k = self.k || {};
+proj4.defs('EPSG:4326', "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ");
 
 //calculates distance between two lat/long points in meters
-self.k.calcDistance = function(lat1, lon1, lat2, lon2) {
-    var p1 = self.k.latLongToXY(Number(lat1), Number(lon1));
-    var p2 = self.k.latLongToXY(Number(lat2), Number(lon2), p1.srid);
-    return self.k.calcDistanceXY(p1, p2);
+export function CalcDistance(lat1, lon1, lat2, lon2) {
+    var p1 = LatLongToXY(Number(lat1), Number(lon1));
+    var p2 = LatLongToXY(Number(lat2), Number(lon2), p1.srid);
+    return CalcDistanceXY(p1, p2);
 };
-self.k.calcDistanceXY = function(p1, p2) {
+export function CalcDistanceXY(p1, p2) {
     return Math.sqrt(Math.pow(Number(p1.x) - Number(p2.x), 2) + Math.pow(Number(p1.y) - Number(p2.y), 2))
 };
-self.k.calcMidPoint = function(lat1, lon1, lat2, lon2) {
-    var p1 = self.k.latLongToXY(Number(lat1), Number(lon1));
-    var p2 = self.k.latLongToXY(Number(lat2), Number(lon2), p1.srid);
-    var midpoint = self.k.calcMidPointXY(p1, p2);
+export function CalcMidPoint(lat1, lon1, lat2, lon2) {
+    var p1 = LatLongToXY(Number(lat1), Number(lon1));
+    var p2 = LatLongToXY(Number(lat2), Number(lon2), p1.srid);
+    var midpoint = CalcMidPointXY(p1, p2);
     midpoint.srid = p1.srid;
-    return self.k.xyToLatLong(midpoint);
+    return XyToLatLong(midpoint);
 };
-self.k.calcMidPointXY = function(p1, p2) {
+export function CalcMidPointXY(p1, p2) {
     return {
         x: (Number(p1.x) + Number(p2.x)) / 2,
         y: (Number(p1.y) + Number(p2.y)) / 2
     }
 }
-self.k.calcBearing = function(lat1, lon1, lat2, lon2) {
-    var p1 = self.k.latLongToXY(Number(lat1), Number(lon1));
-    var p2 = self.k.latLongToXY(Number(lat2), Number(lon2), p1.srid);
-    return self.k.calcBearingXY(p1, p2);
+export function CalcBearing(lat1, lon1, lat2, lon2) {
+    var p1 = LatLongToXY(Number(lat1), Number(lon1));
+    var p2 = LatLongToXY(Number(lat2), Number(lon2), p1.srid);
+    return CalcBearingXY(p1, p2);
 };
-self.k.calcBearingXY = function(p1, p2) {
+export function CalcBearingXY(p1, p2) {
     var dy = Number(p2.y) - Number(p1.y);
     var dx = Number(p2.x) - Number(p1.x);
     var theta = Math.atan2(dy, dx); // range (-PI, PI]
@@ -43,27 +38,27 @@ self.k.calcBearingXY = function(p1, p2) {
     if (theta < 0) theta = 360 + theta; // range [0, 360)-
     return theta;
 };
-//Depricated, Use self.k.calcBearing
-self.k.calcBearingLL = function(lat1, lon1, lat2, lon2) {
-    return self.k.calcBearing(Number(lat1), Number(lon1), Number(lat2), Number(lon2));
+//Depricated, Use CalcBearing
+export function CalcBearingLL(lat1, lon1, lat2, lon2) {
+    return CalcBearing(Number(lat1), Number(lon1), Number(lat2), Number(lon2));
 };
 // calcuates shortest distance between point and line in meters
-self.k.calcDistanceToLine = function(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon) {
-    var p = self.k.latLongToXY(Number(pointLat), Number(pointLon));
-    var p1 = self.k.latLongToXY(Number(linePoint1_Lat), Number(linePoint1_Lon), p.srid);
-    var p2 = self.k.latLongToXY(Number(linePoint2_Lat), Number(linePoint2_Lon), p.srid);
-    var pointOnLine = self.k.snapToLineXY(p, p1, p2);
+export function CalcDistanceToLine(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon) {
+    var p = LatLongToXY(Number(pointLat), Number(pointLon));
+    var p1 = LatLongToXY(Number(linePoint1_Lat), Number(linePoint1_Lon), p.srid);
+    var p2 = LatLongToXY(Number(linePoint2_Lat), Number(linePoint2_Lon), p.srid);
+    var pointOnLine = SnapToLineXY(p, p1, p2);
     return Math.sqrt(pointOnLine.dx * pointOnLine.dx + pointOnLine.dy * pointOnLine.dy);
 };
-self.k.snapToLine = function(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, allowOverflow) {
-    var p = self.k.latLongToXY(Number(pointLat), Number(pointLon));
-    var p1 = self.k.latLongToXY(Number(linePoint1_Lat), Number(linePoint1_Lon), p.srid);
-    var p2 = self.k.latLongToXY(Number(linePoint2_Lat), Number(linePoint2_Lon), p.srid);
-    var pointOnLine = self.k.snapToLineXY(p, p1, p2, allowOverflow);
+export function SnapToLine(pointLat, pointLon, linePoint1_Lat, linePoint1_Lon, linePoint2_Lat, linePoint2_Lon, allowOverflow) {
+    var p = LatLongToXY(Number(pointLat), Number(pointLon));
+    var p1 = LatLongToXY(Number(linePoint1_Lat), Number(linePoint1_Lon), p.srid);
+    var p2 = LatLongToXY(Number(linePoint2_Lat), Number(linePoint2_Lon), p.srid);
+    var pointOnLine = SnapToLineXY(p, p1, p2, allowOverflow);
     pointOnLine.srid = p.srid;
-    return self.k.xyToLatLong(pointOnLine);
+    return XyToLatLong(pointOnLine);
 };
-self.k.snapToLineXY = function(p, p1, p2, allowOverflow) {
+export function SnapToLineXY(p, p1, p2, allowOverflow) {
     var x = Number(p1.x),
         y = Number(p1.y),
         dx = Number(p2.x) - x,
@@ -95,19 +90,19 @@ self.k.snapToLineXY = function(p, p1, p2, allowOverflow) {
     };
 };
 // Snap Point lat and long, Center Point lat and long, optional distance in meters, and optional bearing [0 - 360] with 0 at North
-self.k.snapPosition = function(pointLat, pointLon, centerLat, centerLon, distance_meters, bearing) {
-    var center = self.k.latLongToXY(centerLat, centerLon);
-    var point = self.k.latLongToXY(pointLat, pointLon, center.srid);
-    var snapPoint = self.k.snapPositionXY(point, center, distance_meters, bearing);
+export function SnapPosition(pointLat, pointLon, centerLat, centerLon, distance_meters, bearing) {
+    var center = LatLongToXY(centerLat, centerLon);
+    var point = LatLongToXY(pointLat, pointLon, center.srid);
+    var snapPoint = SnapPositionXY(point, center, distance_meters, bearing);
     snapPoint.srid = center.srid;
-    return self.k.xyToLatLong(snapPoint);
+    return XyToLatLong(snapPoint);
 };
-self.k.snapPositionXY = function(point, center, distance_meters, bearing) {
+export function SnapPositionXY(point, center, distance_meters, bearing) {
     if (distance_meters == null) {
-        distance_meters = self.k.calcDistanceXY(center, point);
+        distance_meters = CalcDistanceXY(center, point);
     }
     if (bearing == null) {
-        bearing = self.k.calcBearingXY(center, point);
+        bearing = CalcBearingXY(center, point);
     }
     var mathBearing = (90 - bearing) * Math.PI / 180;
     var utmX = distance_meters * Math.cos(mathBearing) + center.x;
@@ -117,14 +112,14 @@ self.k.snapPositionXY = function(point, center, distance_meters, bearing) {
         y:utmY
     };
 };
-self.k.snapToCircle = function(pointLat, pointLon, centerLat, centerLon, radius_meters) {
-    var point = self.k.latLongToXY(Number(pointLat), Number(pointLon));
-    var center = self.k.latLongToXY(Number(centerLat), Number(centerLon), point.srid);
-    var pointOnCircle = self.k.snapToCircleXY(point, center, radius_meters);
+export function SnapToCircle(pointLat, pointLon, centerLat, centerLon, radius_meters) {
+    var point = LatLongToXY(Number(pointLat), Number(pointLon));
+    var center = LatLongToXY(Number(centerLat), Number(centerLon), point.srid);
+    var pointOnCircle = SnapToCircleXY(point, center, radius_meters);
     pointOnCircle.srid = point.srid;
-    return self.k.xyToLatLong(pointOnCircle);
+    return XyToLatLong(pointOnCircle);
 };
-self.k.snapToCircleXY = function(point, center, radius) {
+export function SnapToCircleXY(point, center, radius) {
     // where P is the point, C is the center, and R is the radius:
     // V = (P - C); Answer = C + V / |V| * R;
     // where |V| is length of V.
@@ -138,7 +133,7 @@ self.k.snapToCircleXY = function(point, center, radius) {
         y:aY
     };
 };
-self.k.calcProj4 = function(lat, long) {
+export function CalcProj4(lat, long) {
     var zone = 1 + Math.floor((Number(long) + 180) / 6);
     var srid = 32600 + zone;
     var hemisphere = "";
@@ -157,12 +152,12 @@ self.k.calcProj4 = function(lat, long) {
         proj4: proj4String
     };
 };
-//self.k.latLongToXY(lat, long[, srid]) - pass lat and long and it will be projected into correct UTM zone
+//LatLongToXY(lat, long[, srid]) - pass lat and long and it will be projected into correct UTM zone
 //   optionally pass srid to project into that coordinate system
 //   returns {x:x, y:y, srid:srid}
 // TODO make it work with srid's that weren't previously calculated by the library
-self.k.latLongToXY = function(lat, long, srid) {
-    srid = srid || self.k.calcProj4(lat, long).srid;
+export function LatLongToXY(lat, long, srid) {
+    srid = srid || CalcProj4(lat, long).srid;
     var coords = {
         x: long,
         y: lat
@@ -174,11 +169,11 @@ self.k.latLongToXY = function(lat, long, srid) {
     transformed.srid = srid;
     return transformed;
 };
-//self.k.xyToLatLong(xOrPoint[, y, srid]) - pass a point {x:x, y:y, srid:srid} or x, y, srid
+//XyToLatLong(xOrPoint[, y, srid]) - pass a point {x:x, y:y, srid:srid} or x, y, srid
 //    srid should be the epsg srid of the projected points
 //    returns {lat:lat, long:long}
 // TODO make it work with srid's that weren't previously calculated by the library
-self.k.xyToLatLong = function(xOrPoint, y, srid) {
+export function XyToLatLong(xOrPoint, y, srid) {
     var point = xOrPoint;
     if (typeof xOrPoint != 'object') {
         point = {
@@ -194,7 +189,7 @@ self.k.xyToLatLong = function(xOrPoint, y, srid) {
     };
 };
 // round a number to a given decimal place
-self.k.round = function(value, exp) {
+export function Round(value, exp) {
     if (typeof exp === 'undefined' || +exp === 0)
         return Math.round(value);
 
@@ -213,33 +208,33 @@ self.k.round = function(value, exp) {
     return +(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp));
 };
 // Given points p1 and p2, calculate the vector starting at p1 and ending at p2
-self.k.calculateVector = function (p1, p2) {
+export function CalculateVector (p1, p2) {
     return {
         x: p2.x - p1.x,
         y: p2.y - p1.y
     };
 };
 // Given two vectors v1 and v2, add vector v2 to v1
-self.k.addVectors = function(v1, v2) {
+export function AddVectors(v1, v2) {
     return {
         x: v1.x + v2.x,
         y: v1.y + v2.y
     };
 };
 // Given two vectors v1 and v2, subtract vector v2 from v1
-self.k.subtractVectors = function (v1, v2) {
+export function SubtractVectors (v1, v2) {
     return {
         x: v1.x - v2.x,
         y: v1.y - v2.y
     };
 };
 // Calculate the dot product of vectors v1 and v2
-self.k.dotProduct = function (v1, v2) {
+export function DotProduct (v1, v2) {
     return v1.x * v2.x + v1.y * v2.y;
 };
 // Calculate the unit vector of a vector
-self.k.calculateUnitVector = function (vector) {
-    var norm = self.k.vectorNorm(vector);
+export function CalculateUnitVector (vector) {
+    var norm = VectorNorm(vector);
     if (norm != 0) {
         return {
             x: vector.x / norm,
@@ -248,14 +243,14 @@ self.k.calculateUnitVector = function (vector) {
     }
 };
 // Calculate the norm of a vector
-self.k.vectorNorm = function (vector) {
+export function VectorNorm (vector) {
     return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
 };
 // Project vector v1 onto v2
-self.k.projectVectors = function (v1, v2) {// projects v1 onto v2
-    var norm = self.k.vectorNorm(v2);
+export function ProjectVectors (v1, v2) {// projects v1 onto v2
+    var norm = VectorNorm(v2);
     if (norm != 0) {
-        var r = self.k.dotProduct(v1, v2) / Math.pow(norm, 2);
+        var r = DotProduct(v1, v2) / Math.pow(norm, 2);
         if (r > 0.99999999999 && r < 1.00000000001) {
             // fix rounding error
             return {
@@ -284,28 +279,28 @@ self.k.projectVectors = function (v1, v2) {// projects v1 onto v2
     }
 };
 // Scale a vector by c
-self.k.scaleVector = function (c, vector) {
+export function ScaleVector (c, vector) {
     return {
         x: c * vector.x,
         y: c * vector.y
     };
 };
 // Starting a point p, add move by a vector
-self.k.calculatePointFromVector = function (p, vector) {
+export function CalculatePointFromVector (p, vector) {
     return {
         x: p.x + vector.x,
         y: p.y + vector.y,
         srid: p.srid
     };
 };
-self.k.interpolate = function(lat1, lon1, lat2, lon2, percent) {
-    var p1 = self.k.latLongToXY(Number(lat1), Number(lon1));
-    var p2 = self.k.latLongToXY(Number(lat2), Number(lon2), p1.srid);
-    var position = self.k.interpolateXY(p1, p2, percent);
+export function Interpolate(lat1, lon1, lat2, lon2, percent) {
+    var p1 = LatLongToXY(Number(lat1), Number(lon1));
+    var p2 = LatLongToXY(Number(lat2), Number(lon2), p1.srid);
+    var position = InterpolateXY(p1, p2, percent);
     position.srid = p1.srid;
-    return self.k.xyToLatLong(position);
+    return XyToLatLong(position);
 }
-self.k.interpolateXY = function(p1, p2, percent) {
+export function InterpolateXY(p1, p2, percent) {
     return {
         x: Number(p1.x) + (Number(p2.x) - Number(p1.x)) * percent,
         y: Number(p1.y) + (Number(p2.y) - Number(p1.y)) * percent,
@@ -315,7 +310,7 @@ self.k.interpolateXY = function(p1, p2, percent) {
 // line intercept math by Paul Bourke http://paulbourke.net/geometry/pointlineplane/
 // Determine the intersection point of two line segments
 // Return FALSE if the lines don't intersect
-self.k.intersect = function(p1, p2, p3, p4) {
+export function Intersect(p1, p2, p3, p4) {
 
   // Check if none of the lines are of length 0
 	if ((p1.x === p2.x && p1.y === p2.y) || (p3.x === p4.x && p3.y === p4.y)) {
