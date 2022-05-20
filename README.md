@@ -4,19 +4,22 @@ katapult-geometry.js - Javascript GIS Mapping Calculations
 katapult-functions.js - misc useful helper functions
 
 ## NPM Support
-Versions 2.0.0 and higher use ES6 modules. For the html imports version, see version 1.1.6.
+Versions 3.0.2 and higher export named ES6 modules.
+
+For the bare imports version, see version 2.0.0.
+
+For the html imports version, see version 1.1.6.
 
 ## Installation
 Install with npm
-```npm install --save https://github.com/KatapultDevelopment/katapult-toolbox.git```
+```
+npm install --save https://github.com/KatapultDevelopment/katapult-toolbox.git#3.0.2
+```
 
 Then import the modules you need
 ```javascript
-import 'katapult-toolbox/katapult-functions.js'
-import 'katapult-toolbox/katapult-geometry.js'
+import { KatapultFunctions, KatapultGeometry } from 'katapult-toolbox';
 ```
 
-##Usage 
-```k.latLongToXY(lat, long)``` - Calculate XY projection of LL in UTM Feet
-
-Other functions need to be added to readme!
+## Usage 
+```KatapultGeometry.latLongToXY(lat, long)``` - Calculate XY projection of LL in UTM Feet

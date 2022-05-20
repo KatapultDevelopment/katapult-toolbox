@@ -1,6 +1,6 @@
 {
   "name": "katapult-toolbox",
-  "version": "3.0.0",
+  "version": "3.0.2",
   "description": "Javascript GIS Mapping Calculations and misc useful helper functions",
   "main": "index.js",
   "scripts": {
